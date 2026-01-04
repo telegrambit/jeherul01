@@ -4,7 +4,7 @@ import { AppCard } from './components/AppCard';
 import { AppDetails } from './components/AppDetails';
 import { MOCK_APPS, CATEGORIES } from './constants';
 import { AppData, Tab } from './types';
-import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -64,6 +64,18 @@ const App: React.FC = () => {
     searchInputRef.current?.blur();
   };
 
+  // Icon helper for search categories
+  const getCategoryIcon = (cat: string) => {
+    switch(cat) {
+      case 'Games': return <Gamepad2 className="text-purple-400" size={24} />;
+      case 'Music': return <Music className="text-pink-400" size={24} />;
+      case 'Entertainment': return <Film className="text-orange-400" size={24} />;
+      case 'Photography': return <Camera className="text-blue-400" size={24} />;
+      case 'Tools': return <Hammer className="text-gray-400" size={24} />;
+      default: return <Sparkles className="text-yellow-400" size={24} />;
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24 relative overflow-hidden bg-[#0f172a]">
       
@@ -75,16 +87,17 @@ const App: React.FC = () => {
           <div className="w-full flex items-center animate-[slideUp_0.2s_ease-out]">
              <form onSubmit={handleSearchSubmit} className="relative w-full group">
                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl blur-md opacity-40 group-focus-within:opacity-80 transition-opacity"></div>
-               <div className="relative flex items-center bg-surface/80 border border-white/10 rounded-xl px-3 py-2.5 shadow-sm transition-all focus-within:border-primary/50 focus-within:bg-surface">
+               <div className="relative flex items-center bg-surface/80 border border-white/10 rounded-xl px-3 py-3 shadow-sm transition-all focus-within:border-primary/50 focus-within:bg-surface">
                  <Search className="text-slate-400 mr-3 shrink-0" size={20} />
                  <input 
                     ref={searchInputRef}
                     type="text"
                     className="bg-transparent border-none outline-none text-white w-full text-base font-medium placeholder:text-slate-500"
-                    placeholder="Search apps..."
+                    placeholder="Search mods, games, tools..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     enterKeyHint="search"
+                    /* autoFocus removed */
                  />
                  {searchQuery && (
                     <button 
@@ -200,37 +213,91 @@ const App: React.FC = () => {
         {/* SEARCH TAB CONTENT */}
         {activeTab === 'search' && (
           <div className="animate-[slideUp_0.3s_ease-out]">
-            <section className="space-y-4 mt-2 px-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                 Results ({filteredApps.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-20">
-                {filteredApps.length > 0 ? (
-                  filteredApps.map((app) => (
-                    <AppCard key={app.id} app={app} onClick={setSelectedApp} />
-                  ))
-                ) : (
-                  <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-500 opacity-60">
-                    <Search size={48} className="mb-4 text-slate-700" />
-                    <p>No apps found for "{searchQuery}"</p>
+            {!searchQuery ? (
+              /* EMPTY STATE - DASHBOARD STYLE */
+              <div className="space-y-8 pt-2 pb-20">
+                {/* Popular Searches Tags */}
+                <section>
+                  <div className="flex items-center gap-2 mb-4 text-slate-400 px-1">
+                    <TrendingUp size={16} />
+                    <h2 className="text-sm font-bold uppercase tracking-wider">Trending Searches</h2>
                   </div>
-                )}
+                  <div className="flex flex-wrap gap-2.5">
+                    {['Minecraft', 'Spotify Premium', 'Free Fire Max', 'GTA V', 'Netflix Mod', 'Roblox', 'Lightroom'].map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setSearchQuery(tag)}
+                        className="px-4 py-2.5 bg-surface rounded-xl text-sm text-slate-300 font-medium border border-white/5 active:scale-95 transition-all hover:bg-white/10 hover:text-white hover:border-white/20"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Browse Categories Grid */}
+                <section>
+                   <div className="flex items-center gap-2 mb-4 text-slate-400 px-1">
+                    <Sparkles size={16} />
+                    <h2 className="text-sm font-bold uppercase tracking-wider">Browse Categories</h2>
+                   </div>
+                   <div className="grid grid-cols-2 gap-3">
+                     {CATEGORIES.filter(c => c !== 'All').map(cat => (
+                       <div 
+                         key={cat}
+                         onClick={() => setSearchQuery(cat)}
+                         className="h-20 rounded-2xl bg-surface border border-white/5 flex items-center px-5 gap-4 cursor-pointer active:scale-95 transition-all hover:bg-white/5 group relative overflow-hidden shadow-sm"
+                       >
+                         <div className="absolute right-0 top-0 w-16 h-full bg-gradient-to-l from-black/20 to-transparent pointer-events-none"></div>
+                         
+                         <div className="w-10 h-10 rounded-full bg-[#0f172a] flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+                            {getCategoryIcon(cat)}
+                         </div>
+                         <span className="font-bold text-white text-base tracking-tight">{cat}</span>
+                       </div>
+                     ))}
+                   </div>
+                </section>
               </div>
-            </section>
+            ) : (
+              /* RESULTS STATE */
+              <section className="space-y-4 mt-2 px-1">
+                <div className="flex items-center justify-between">
+                   <h2 className="text-lg font-bold text-white">Results <span className="text-slate-500 text-sm font-medium">({filteredApps.length})</span></h2>
+                   {filteredApps.length > 0 && <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-lg">Best Match</span>}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-20">
+                  {filteredApps.length > 0 ? (
+                    filteredApps.map((app) => (
+                       <AppCard key={app.id} app={app} onClick={setSelectedApp} />
+                    ))
+                  ) : (
+                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-500 opacity-60">
+                      <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mb-4 border border-white/5">
+                         <Search size={32} className="text-slate-600" />
+                      </div>
+                      <p className="text-lg font-bold text-slate-400">No apps found</p>
+                      <p className="text-sm">Try searching for "{CATEGORIES[1]}"</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
           </div>
         )}
 
-        {/* APPS (CATEGORIES) TAB CONTENT - UPDATED */}
+        {/* APPS (CATEGORIES) TAB CONTENT */}
         {activeTab === 'categories' && (
           <div className="animate-[slideUp_0.3s_ease-out] pb-6">
             
             {/* Conditional Rendering: Main List vs Specific Category View */}
             {!viewingCategory ? (
               <>
-                {/* 1. Quick Access / Suggested For You (ICONS ONLY) */}
+                {/* 1. Suggested For You (ICONS ONLY) */}
                 <section className="mb-6">
                   <h2 className="text-lg font-bold text-white mb-3 px-1">Suggested For You</h2>
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-4">
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
                     {/* Repeat MOCK_APPS multiple times to simulate 20 apps */}
                     {[...MOCK_APPS, ...MOCK_APPS, ...MOCK_APPS, ...MOCK_APPS].slice(0, 20).map((app, index) => (
                       <div 
@@ -246,7 +313,26 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* 2. Category Rows - Horizontal Swipe of 3 Vertical Apps */}
+                {/* 2. Popular Apps (ICONS ONLY) */}
+                <section className="mb-6">
+                  <h2 className="text-lg font-bold text-white mb-3 px-1">Popular Apps</h2>
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-4">
+                    {/* Reverse MOCK_APPS to make it look different from Suggested */}
+                    {[...MOCK_APPS].reverse().concat([...MOCK_APPS].reverse()).slice(0, 20).map((app, index) => (
+                      <div 
+                        key={`${app.id}-popular-${index}`} 
+                        onClick={() => setSelectedApp(app)}
+                        className="flex flex-col items-center shrink-0 cursor-pointer group"
+                      >
+                        <div className="w-[68px] h-[68px] rounded-2xl overflow-hidden border border-white/10 group-active:scale-95 transition-transform shadow-lg bg-surface">
+                          <img src={app.icon} alt={app.name} className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 3. Category Rows - Horizontal Swipe of 3 Vertical Apps */}
                 <div className="space-y-8">
                   {CATEGORIES.filter(c => c !== 'All').map((category) => {
                     const categoryApps = getCategoryApps(category);
@@ -291,7 +377,7 @@ const App: React.FC = () => {
                 </div>
               </>
             ) : (
-              /* 3. Full Category View (Sirf Icon Grid) */
+              /* 4. Full Category View (Sirf Icon Grid) */
               <div className="animate-[slideUp_0.2s_ease-out]">
                  {/* Apps Grid - Icon Style */}
                  <div className="grid grid-cols-4 gap-4 px-1">

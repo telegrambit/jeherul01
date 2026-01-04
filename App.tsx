@@ -4,13 +4,41 @@ import { AppCard } from './components/AppCard';
 import { AppDetails } from './components/AppDetails';
 import { MOCK_APPS, CATEGORIES } from './constants';
 import { AppData, Tab } from './types';
-import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp } from 'lucide-react';
+import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp, Star, Send, MessageSquare, Check, Edit3, Save, CheckCircle, Heart, Plane, User } from 'lucide-react';
+
+// 9 High-Quality Modern Avatars (Micah Style)
+const AVATARS = [
+  'https://api.dicebear.com/9.x/micah/svg?seed=Felix',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Aneka',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Christopher',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Jeane',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Sasha',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Funny',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Midnight',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Cuddles',
+  'https://api.dicebear.com/9.x/micah/svg?seed=Willow'
+];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [selectedApp, setSelectedApp] = useState<AppData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  
+  // Profile States
+  const [userName, setUserName] = useState("Mod Master");
+  const [tempName, setTempName] = useState("");
+  
+  const [currentAvatar, setCurrentAvatar] = useState(AVATARS[0]);
+  const [tempAvatar, setTempAvatar] = useState(AVATARS[0]);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  
+  const [userRating, setUserRating] = useState(0);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  
+  const [requestName, setRequestName] = useState('');
+  const [requestText, setRequestText] = useState('');
+  const [isRequestSuccess, setIsRequestSuccess] = useState(false);
   
   // New State for viewing a specific category in full mode
   const [viewingCategory, setViewingCategory] = useState<string | null>(null);
@@ -64,15 +92,61 @@ const App: React.FC = () => {
     searchInputRef.current?.blur();
   };
 
+  // Profile Handlers
+  const openEditProfile = () => {
+    setTempName(userName);
+    setTempAvatar(currentAvatar);
+    setShowEditProfileModal(true);
+  };
+
+  const saveProfileChanges = () => {
+    if (tempName.trim()) {
+      setUserName(tempName);
+    }
+    setCurrentAvatar(tempAvatar);
+    setShowEditProfileModal(false);
+  };
+
+  const handleSendRequest = () => {
+    if (!requestText.trim() || !requestName.trim()) return;
+    setIsRequestSuccess(true);
+    
+    // Reset after showing success message for 3 seconds
+    setTimeout(() => {
+        setIsRequestSuccess(false);
+        setRequestText('');
+        setRequestName('');
+    }, 3000);
+  };
+
+  const handleSubmitFeedback = () => {
+    setFeedbackSubmitted(true);
+    setTimeout(() => {
+      // Reset after 3 seconds so they can rate again if they want
+      setFeedbackSubmitted(false);
+      setUserRating(0);
+    }, 3000);
+  };
+
+  const handleTelegramJoin = () => {
+    // Logic to open telegram
+    window.open('https://telegram.org', '_blank');
+  };
+
+  const handleFavoritesClick = () => {
+    // Visual feedback only since we don't have a favorites page yet
+    alert("Favorites feature coming soon!");
+  };
+
   // Icon helper for search categories
   const getCategoryIcon = (cat: string) => {
     switch(cat) {
-      case 'Games': return <Gamepad2 className="text-purple-400" size={24} />;
-      case 'Music': return <Music className="text-pink-400" size={24} />;
-      case 'Entertainment': return <Film className="text-orange-400" size={24} />;
-      case 'Photography': return <Camera className="text-blue-400" size={24} />;
-      case 'Tools': return <Hammer className="text-gray-400" size={24} />;
-      default: return <Sparkles className="text-yellow-400" size={24} />;
+      case 'Games': return <Gamepad2 className="text-purple-400" size={20} />;
+      case 'Music': return <Music className="text-pink-400" size={20} />;
+      case 'Entertainment': return <Film className="text-orange-400" size={20} />;
+      case 'Photography': return <Camera className="text-blue-400" size={20} />;
+      case 'Tools': return <Hammer className="text-gray-400" size={20} />;
+      default: return <Sparkles className="text-yellow-400" size={20} />;
     }
   };
 
@@ -83,17 +157,17 @@ const App: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-40 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-4 max-w-md mx-auto sm:max-w-2xl lg:max-w-4xl w-full transition-all duration-300">
         
         {activeTab === 'search' ? (
-          /* SEARCH HEADER MODE */
+          /* SEARCH HEADER MODE - COMPACT */
           <div className="w-full flex items-center animate-[slideUp_0.2s_ease-out]">
              <form onSubmit={handleSearchSubmit} className="relative w-full group">
                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl blur-md opacity-40 group-focus-within:opacity-80 transition-opacity"></div>
-               <div className="relative flex items-center bg-surface/80 border border-white/10 rounded-xl px-3 py-3 shadow-sm transition-all focus-within:border-primary/50 focus-within:bg-surface">
-                 <Search className="text-slate-400 mr-3 shrink-0" size={20} />
+               <div className="relative flex items-center bg-surface/80 border border-white/10 rounded-xl px-3 py-2 shadow-sm transition-all focus-within:border-primary/50 focus-within:bg-surface">
+                 <Search className="text-slate-400 mr-2 shrink-0" size={18} />
                  <input 
                     ref={searchInputRef}
                     type="text"
-                    className="bg-transparent border-none outline-none text-white w-full text-base font-medium placeholder:text-slate-500"
-                    placeholder="Search mods, games, tools..."
+                    className="bg-transparent border-none outline-none text-white w-full text-sm font-medium placeholder:text-slate-500"
+                    placeholder="Search mods, games..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     enterKeyHint="search"
@@ -105,7 +179,7 @@ const App: React.FC = () => {
                       onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }} 
                       className="p-1 text-slate-500 hover:text-white shrink-0"
                     >
-                        <X size={18} />
+                        <X size={16} />
                     </button>
                  )}
                </div>
@@ -136,12 +210,12 @@ const App: React.FC = () => {
               </div>
             )}
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
               <button 
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-slate-300 active:scale-95 transition-transform"
-                onClick={() => alert("Signup Page Coming Soon!")}
+                onClick={() => setActiveTab('profile')}
               >
-                <UserCircle size={26} />
+                <UserCircle size={26} className={activeTab === 'profile' ? 'text-primary' : ''} />
               </button>
             </div>
           </>
@@ -214,20 +288,20 @@ const App: React.FC = () => {
         {activeTab === 'search' && (
           <div className="animate-[slideUp_0.3s_ease-out]">
             {!searchQuery ? (
-              /* EMPTY STATE - DASHBOARD STYLE */
-              <div className="space-y-8 pt-2 pb-20">
+              /* EMPTY STATE - DASHBOARD STYLE (COMPACTED) */
+              <div className="space-y-6 pt-2 pb-20">
                 {/* Popular Searches Tags */}
                 <section>
-                  <div className="flex items-center gap-2 mb-4 text-slate-400 px-1">
-                    <TrendingUp size={16} />
-                    <h2 className="text-sm font-bold uppercase tracking-wider">Trending Searches</h2>
+                  <div className="flex items-center gap-2 mb-3 text-slate-400 px-1">
+                    <TrendingUp size={14} />
+                    <h2 className="text-xs font-bold uppercase tracking-wider">Trending Searches</h2>
                   </div>
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="flex flex-wrap gap-2">
                     {['Minecraft', 'Spotify Premium', 'Free Fire Max', 'GTA V', 'Netflix Mod', 'Roblox', 'Lightroom'].map(tag => (
                       <button
                         key={tag}
                         onClick={() => setSearchQuery(tag)}
-                        className="px-4 py-2.5 bg-surface rounded-xl text-sm text-slate-300 font-medium border border-white/5 active:scale-95 transition-all hover:bg-white/10 hover:text-white hover:border-white/20"
+                        className="px-3 py-2 bg-surface rounded-lg text-xs text-slate-300 font-medium border border-white/5 active:scale-95 transition-all hover:bg-white/10 hover:text-white hover:border-white/20"
                       >
                         {tag}
                       </button>
@@ -237,23 +311,23 @@ const App: React.FC = () => {
 
                 {/* Browse Categories Grid */}
                 <section>
-                   <div className="flex items-center gap-2 mb-4 text-slate-400 px-1">
-                    <Sparkles size={16} />
-                    <h2 className="text-sm font-bold uppercase tracking-wider">Browse Categories</h2>
+                   <div className="flex items-center gap-2 mb-3 text-slate-400 px-1">
+                    <Sparkles size={14} />
+                    <h2 className="text-xs font-bold uppercase tracking-wider">Browse Categories</h2>
                    </div>
-                   <div className="grid grid-cols-2 gap-3">
+                   <div className="grid grid-cols-2 gap-2">
                      {CATEGORIES.filter(c => c !== 'All').map(cat => (
                        <div 
                          key={cat}
                          onClick={() => setSearchQuery(cat)}
-                         className="h-20 rounded-2xl bg-surface border border-white/5 flex items-center px-5 gap-4 cursor-pointer active:scale-95 transition-all hover:bg-white/5 group relative overflow-hidden shadow-sm"
+                         className="h-16 rounded-xl bg-surface border border-white/5 flex items-center px-4 gap-3 cursor-pointer active:scale-95 transition-all hover:bg-white/5 group relative overflow-hidden shadow-sm"
                        >
-                         <div className="absolute right-0 top-0 w-16 h-full bg-gradient-to-l from-black/20 to-transparent pointer-events-none"></div>
+                         <div className="absolute right-0 top-0 w-12 h-full bg-gradient-to-l from-black/20 to-transparent pointer-events-none"></div>
                          
-                         <div className="w-10 h-10 rounded-full bg-[#0f172a] flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+                         <div className="w-9 h-9 rounded-full bg-[#0f172a] flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
                             {getCategoryIcon(cat)}
                          </div>
-                         <span className="font-bold text-white text-base tracking-tight">{cat}</span>
+                         <span className="font-bold text-white text-sm tracking-tight">{cat}</span>
                        </div>
                      ))}
                    </div>
@@ -263,22 +337,22 @@ const App: React.FC = () => {
               /* RESULTS STATE */
               <section className="space-y-4 mt-2 px-1">
                 <div className="flex items-center justify-between">
-                   <h2 className="text-lg font-bold text-white">Results <span className="text-slate-500 text-sm font-medium">({filteredApps.length})</span></h2>
-                   {filteredApps.length > 0 && <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-lg">Best Match</span>}
+                   <h2 className="text-base font-bold text-white">Results <span className="text-slate-500 text-xs font-medium">({filteredApps.length})</span></h2>
+                   {filteredApps.length > 0 && <span className="text-[10px] text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-lg">Best Match</span>}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pb-20">
                   {filteredApps.length > 0 ? (
                     filteredApps.map((app) => (
                        <AppCard key={app.id} app={app} onClick={setSelectedApp} />
                     ))
                   ) : (
                     <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-500 opacity-60">
-                      <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mb-4 border border-white/5">
-                         <Search size={32} className="text-slate-600" />
+                      <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mb-4 border border-white/5">
+                         <Search size={24} className="text-slate-600" />
                       </div>
-                      <p className="text-lg font-bold text-slate-400">No apps found</p>
-                      <p className="text-sm">Try searching for "{CATEGORIES[1]}"</p>
+                      <p className="text-base font-bold text-slate-400">No apps found</p>
+                      <p className="text-xs">Try searching for "{CATEGORIES[1]}"</p>
                     </div>
                   )}
                 </div>
@@ -401,12 +475,225 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* PROFILE TAB PLACEHOLDER */}
+        {/* PROFILE TAB CONTENT */}
         {activeTab === 'profile' && (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-slate-500 animate-[slideUp_0.3s_ease-out]">
-            <UserCircle size={64} className="mb-4 text-slate-700" />
-            <h2 className="text-xl font-bold text-white mb-2">My Profile</h2>
-            <p>Login to save your favorite mods.</p>
+          <div className="animate-[slideUp_0.3s_ease-out] pb-6">
+            
+            {/* 1. Profile Info Card with Avatar Edit */}
+            <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-xl relative overflow-hidden mb-6 flex flex-col items-center">
+               <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary/20 to-secondary/20 blur-xl"></div>
+               
+               <div className="relative mb-6 group">
+                 <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-br from-primary to-secondary shadow-2xl">
+                    <img 
+                      src={currentAvatar} 
+                      alt="User Avatar" 
+                      className="w-full h-full rounded-full bg-[#0f172a] object-cover border-4 border-[#0f172a]"
+                    />
+                 </div>
+                 {/* Pencil Icon for Avatar Edit */}
+                 <button 
+                   onClick={openEditProfile}
+                   className="absolute bottom-1 right-1 bg-white text-black p-2 rounded-full shadow-lg active:scale-90 transition-transform hover:bg-primary hover:text-white"
+                 >
+                    <Edit3 size={16} />
+                 </button>
+               </div>
+
+               {/* Name Display (No Edit Icon Here) */}
+               <div className="flex items-center gap-2 relative z-10">
+                   <h2 className="text-2xl font-bold text-white">{userName}</h2>
+               </div>
+            </div>
+
+            {/* Edit Profile Modal (Name & Avatar) */}
+            {showEditProfileModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[slideUp_0.2s_ease-out]">
+                <div className="bg-[#0f172a] border border-white/10 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative flex flex-col max-h-[90vh]">
+                  
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-white">Edit Profile</h3>
+                    <button onClick={() => setShowEditProfileModal(false)} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                  </div>
+
+                  <div className="overflow-y-auto no-scrollbar flex-1">
+                      {/* Name Input Section */}
+                      <div className="mb-6">
+                        <label className="block text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Display Name</label>
+                        <div className="relative">
+                            <User className="absolute left-4 top-3.5 text-slate-500" size={18} />
+                            <input 
+                              type="text" 
+                              value={tempName}
+                              onChange={(e) => setTempName(e.target.value)}
+                              className="w-full bg-surface border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white font-medium focus:outline-none focus:border-primary focus:bg-surface/80 transition-all placeholder:text-slate-600"
+                              placeholder="Enter your name"
+                            />
+                        </div>
+                      </div>
+
+                      {/* Avatar Grid Section */}
+                      <div className="mb-2">
+                        <label className="block text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">Choose Avatar</label>
+                        <div className="grid grid-cols-3 gap-4 place-items-center">
+                          {AVATARS.map((avi, idx) => (
+                            <button 
+                              key={idx}
+                              onClick={() => setTempAvatar(avi)}
+                              className={`w-20 h-20 rounded-full border-2 transition-all overflow-hidden active:scale-90 relative ${tempAvatar === avi ? 'border-primary shadow-[0_0_20px_rgba(139,92,246,0.5)] ring-2 ring-primary/50' : 'border-white/10 opacity-70 hover:opacity-100 hover:border-white/30'}`}
+                            >
+                              <img src={avi} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-surface" />
+                              {tempAvatar === avi && (
+                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                  <Check className="text-white drop-shadow-md" size={24} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                  </div>
+                  
+                  {/* Save Button */}
+                  <div className="pt-6 mt-2 border-t border-white/5">
+                    <button 
+                        onClick={saveProfileChanges}
+                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                        Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Favorites and Telegram Buttons */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+               <button 
+                  onClick={handleFavoritesClick}
+                  className="bg-surface p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center gap-2 shadow-lg active:scale-95 transition-all group relative overflow-hidden"
+               >
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                     <Heart className="text-pink-500 fill-pink-500/20" size={24} />
+                  </div>
+                  <span className="text-white font-bold text-sm">My Favorites</span>
+               </button>
+
+               <button 
+                  onClick={handleTelegramJoin}
+                  className="bg-surface p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center gap-2 shadow-lg active:scale-95 transition-all group relative overflow-hidden"
+               >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                     <Plane className="text-blue-500 fill-blue-500/20 -rotate-45 translate-x-1" size={24} />
+                  </div>
+                  <span className="text-white font-bold text-sm">Join Telegram</span>
+               </button>
+            </div>
+
+            {/* 3. Feedback System */}
+            <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-lg mb-6 text-center transition-all duration-300">
+              {feedbackSubmitted ? (
+                 <div className="py-4 flex flex-col items-center animate-[slideUp_0.3s_ease-out]">
+                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-3">
+                       <CheckCircle size={32} className="text-green-500" />
+                    </div>
+                    <h3 className="text-white font-bold text-lg">Thank You!</h3>
+                    <p className="text-slate-400 text-sm">Your feedback helps us improve.</p>
+                 </div>
+              ) : (
+                <>
+                  <h3 className="text-white font-bold text-lg mb-1">Rate ModVerse</h3>
+                  <p className="text-slate-400 text-sm mb-4">How is your experience so far?</p>
+                  
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button 
+                        key={star}
+                        onClick={() => setUserRating(star)}
+                        className="transition-transform active:scale-90 hover:scale-110 focus:outline-none"
+                      >
+                        <Star 
+                          size={32} 
+                          fill={star <= userRating ? "#fbbf24" : "none"} 
+                          className={star <= userRating ? "text-amber-400 drop-shadow-md" : "text-slate-600"}
+                          strokeWidth={1.5}
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  {userRating > 0 && (
+                    <button 
+                      onClick={handleSubmitFeedback}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm shadow-lg active:scale-95 transition-all animate-[slideUp_0.2s_ease-out] flex items-center justify-center gap-2"
+                    >
+                       Submit Feedback <Send size={16} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* 4. Request Mod / Contact (UPDATED WITH SUCCESS ANIMATION) */}
+            <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-lg relative overflow-hidden min-h-[300px] flex flex-col justify-center transition-all">
+               {isRequestSuccess ? (
+                 <div className="flex flex-col items-center justify-center animate-[slideUp_0.3s_ease-out] h-full">
+                    <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                       <CheckCircle size={48} className="text-green-500" strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-white font-bold text-xl mb-2">Request Sent!</h3>
+                    <p className="text-slate-400 text-center text-sm px-4">
+                      We've received your request for <strong>{requestName}</strong>.
+                    </p>
+                 </div>
+               ) : (
+                 <div className="animate-[slideUp_0.3s_ease-out] h-full flex flex-col justify-between">
+                   <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <MessageSquare className="text-primary" size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold text-lg">Request a Mod</h3>
+                        <p className="text-slate-400 text-xs">Tell us what you want next!</p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      {/* Name Input */}
+                      <div>
+                        <input 
+                          type="text"
+                          value={requestName}
+                          onChange={(e) => setRequestName(e.target.value)}
+                          placeholder="Your Name"
+                          className="w-full bg-[#0f172a] rounded-xl border border-white/10 p-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors text-sm"
+                        />
+                      </div>
+
+                      {/* Message Input */}
+                      <div className="relative">
+                        <textarea 
+                          value={requestText}
+                          onChange={(e) => setRequestText(e.target.value)}
+                          placeholder="e.g., Please add the latest mod for..."
+                          className="w-full h-24 bg-[#0f172a] rounded-xl border border-white/10 p-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors resize-none text-sm"
+                        />
+                      </div>
+                      
+                      <button 
+                        onClick={handleSendRequest}
+                        disabled={!requestText.trim() || !requestName.trim()}
+                        className="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Send Request <Send size={18} />
+                      </button>
+                   </div>
+                 </div>
+               )}
+            </div>
+
           </div>
         )}
 

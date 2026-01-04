@@ -18,11 +18,17 @@
             },
             animation: {
               'slideUp': 'slideUp 0.3s ease-out',
+              'flyAway': 'flyAway 1.5s ease-in-out forwards',
             },
             keyframes: {
               slideUp: {
                 '0%': { transform: 'translateY(100%)', opacity: '0' },
                 '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              flyAway: {
+                '0%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+                '20%': { transform: 'translate(-20px, 20px) scale(0.9)', opacity: '1' },
+                '100%': { transform: 'translate(300px, -300px) scale(0)', opacity: '0' },
               }
             }
           }

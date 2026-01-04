@@ -4,7 +4,7 @@ import { AppCard } from './components/AppCard';
 import { AppDetails } from './components/AppDetails';
 import { MOCK_APPS, CATEGORIES } from './constants';
 import { AppData, Tab } from './types';
-import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp, Star, Send, MessageSquare, Check, Edit3, Save, CheckCircle, Heart, Plane, User } from 'lucide-react';
+import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp, Star, Send, MessageSquare, Check, Edit3, Save, CheckCircle, Heart, Plane, User, Mail, ShieldCheck, Quote } from 'lucide-react';
 
 // 9 High-Quality Modern Avatars (Micah Style)
 const AVATARS = [
@@ -17,6 +17,13 @@ const AVATARS = [
   'https://api.dicebear.com/9.x/micah/svg?seed=Midnight',
   'https://api.dicebear.com/9.x/micah/svg?seed=Cuddles',
   'https://api.dicebear.com/9.x/micah/svg?seed=Willow'
+];
+
+// Initial Mock Public Feedbacks
+const INITIAL_FEEDBACKS = [
+  { id: 1, name: "Rahul Gaming", avatar: AVATARS[1], rating: 5, time: "2h ago", text: "Best mod store ever! The Minecraft mod works perfectly. 100% Trusted." },
+  { id: 2, name: "Sarah K.", avatar: AVATARS[4], rating: 5, time: "5h ago", text: "Super fast downloads and no viruses. Design is also very OP! ❤️" },
+  { id: 3, name: "Mike Tech", avatar: AVATARS[6], rating: 4, time: "1d ago", text: "Can you add more simulation games? Otherwise 10/10 app." }
 ];
 
 const App: React.FC = () => {
@@ -33,12 +40,21 @@ const App: React.FC = () => {
   const [tempAvatar, setTempAvatar] = useState(AVATARS[0]);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   
+  // Rating & Review System States
   const [userRating, setUserRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [publicFeedbacks, setPublicFeedbacks] = useState(INITIAL_FEEDBACKS);
   
+  // Request / Contact Form States
+  const [isContactMode, setIsContactMode] = useState(false); // Toggle state: false = Request Mod, true = Contact Owner
   const [requestName, setRequestName] = useState('');
+  const [requestAppName, setRequestAppName] = useState(''); // Only for Request Mode
+  const [contactEmail, setContactEmail] = useState('');     // Only for Contact Mode
   const [requestText, setRequestText] = useState('');
+  
   const [isRequestSuccess, setIsRequestSuccess] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   
   // New State for viewing a specific category in full mode
   const [viewingCategory, setViewingCategory] = useState<string | null>(null);
@@ -108,23 +124,50 @@ const App: React.FC = () => {
   };
 
   const handleSendRequest = () => {
+    // Validation based on mode
     if (!requestText.trim() || !requestName.trim()) return;
-    setIsRequestSuccess(true);
+    if (isContactMode && !contactEmail.trim()) return;
+    if (!isContactMode && !requestAppName.trim()) return;
     
-    // Reset after showing success message for 3 seconds
+    // Start Sending Animation
+    setIsSending(true);
+    
+    // Simulate API delay / Animation duration
     setTimeout(() => {
-        setIsRequestSuccess(false);
-        setRequestText('');
-        setRequestName('');
-    }, 3000);
+        setIsSending(false);
+        setIsRequestSuccess(true);
+        
+        // Reset after showing success message for 3 seconds
+        setTimeout(() => {
+            setIsRequestSuccess(false);
+            setRequestText('');
+            setRequestName('');
+            setRequestAppName('');
+            setContactEmail('');
+        }, 3000);
+    }, 1500); // 1.5s for the flying animation
   };
 
   const handleSubmitFeedback = () => {
+    // Create new review object
+    const newReview = {
+      id: Date.now(),
+      name: userName, // Use current profile name
+      avatar: currentAvatar, // Use current profile avatar
+      rating: userRating,
+      time: "Just now",
+      text: feedbackText || "Rated with " + userRating + " stars! ⭐"
+    };
+
+    // Add to top of list
+    setPublicFeedbacks([newReview, ...publicFeedbacks]);
     setFeedbackSubmitted(true);
+
     setTimeout(() => {
       // Reset after 3 seconds so they can rate again if they want
       setFeedbackSubmitted(false);
       setUserRating(0);
+      setFeedbackText("");
     }, 3000);
   };
 
@@ -500,7 +543,7 @@ const App: React.FC = () => {
                  </button>
                </div>
 
-               {/* Name Display (No Edit Icon Here) */}
+               {/* Name Display */}
                <div className="flex items-center gap-2 relative z-10">
                    <h2 className="text-2xl font-bold text-white">{userName}</h2>
                </div>
@@ -592,7 +635,7 @@ const App: React.FC = () => {
                </button>
             </div>
 
-            {/* 3. Feedback System */}
+            {/* 3. Feedback System (Rate Us with Review Input) */}
             <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-lg mb-6 text-center transition-all duration-300">
               {feedbackSubmitted ? (
                  <div className="py-4 flex flex-col items-center animate-[slideUp_0.3s_ease-out]">
@@ -623,76 +666,178 @@ const App: React.FC = () => {
                       </button>
                     ))}
                   </div>
-
+                  
+                  {/* Dynamic Review Input */}
                   {userRating > 0 && (
-                    <button 
-                      onClick={handleSubmitFeedback}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm shadow-lg active:scale-95 transition-all animate-[slideUp_0.2s_ease-out] flex items-center justify-center gap-2"
-                    >
-                       Submit Feedback <Send size={16} />
-                    </button>
+                    <div className="animate-[slideUp_0.2s_ease-out]">
+                      <textarea 
+                        value={feedbackText}
+                        onChange={(e) => setFeedbackText(e.target.value)}
+                        placeholder="Tell us what you think... (Optional)"
+                        className="w-full bg-[#0f172a] rounded-xl border border-white/10 p-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 transition-colors resize-none h-20 mb-3"
+                      />
+                      <button 
+                        onClick={handleSubmitFeedback}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                         Submit Feedback <Send size={16} />
+                      </button>
+                    </div>
                   )}
                 </>
               )}
             </div>
 
-            {/* 4. Request Mod / Contact (UPDATED WITH SUCCESS ANIMATION) */}
-            <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-lg relative overflow-hidden min-h-[300px] flex flex-col justify-center transition-all">
-               {isRequestSuccess ? (
+            {/* 4. Request Mod / Contact Owner (SWITCH TOGGLE IMPLEMENTED) */}
+            <div className="bg-surface rounded-3xl p-6 border border-white/5 shadow-lg relative overflow-hidden min-h-[360px] flex flex-col justify-center transition-all mb-6">
+               
+               {/* Header & Toggle Switch */}
+               {!isSending && !isRequestSuccess && (
+                 <div className="flex flex-col gap-4 mb-5">
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isContactMode ? 'bg-blue-500/10 text-blue-500' : 'bg-primary/10 text-primary'}`}>
+                            {isContactMode ? <Mail size={20} /> : <MessageSquare size={20} />}
+                          </div>
+                          <div>
+                            <h3 className="text-white font-bold text-lg">{isContactMode ? 'Contact Owner' : 'Request a Mod'}</h3>
+                            <p className="text-slate-400 text-xs">{isContactMode ? 'Send a direct message to admin' : 'Tell us what app you need next'}</p>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Premium Segmented Switch */}
+                    <div className="flex bg-[#0f172a] rounded-xl p-1 border border-white/10 relative">
+                       <button 
+                         onClick={() => setIsContactMode(false)}
+                         className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all z-10 ${!isContactMode ? 'text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
+                       >
+                         Request Mod
+                       </button>
+                       <button 
+                         onClick={() => setIsContactMode(true)}
+                         className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all z-10 ${isContactMode ? 'text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
+                       >
+                         Contact Owner
+                       </button>
+                       {/* Sliding Background */}
+                       <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-surface rounded-lg transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${isContactMode ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}></div>
+                    </div>
+                 </div>
+               )}
+
+               {isSending ? (
+                 <div className="flex flex-col items-center justify-center h-full animate-[slideUp_0.3s_ease-out]">
+                    <div className="relative">
+                      {/* Pulse Ring Effect */}
+                      <div className={`absolute inset-0 rounded-full animate-pulse scale-150 ${isContactMode ? 'bg-blue-500/20' : 'bg-primary/20'}`}></div>
+                      
+                      {/* Flying Paper Plane Container */}
+                      <div className={`w-20 h-20 rounded-full flex items-center justify-center z-10 animate-flyAway ${isContactMode ? 'bg-blue-500/10' : 'bg-primary/10'}`}>
+                         <Send size={32} className={`${isContactMode ? 'text-blue-500' : 'text-primary'} -rotate-45 translate-x-1 translate-y-1`} strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <p className={`${isContactMode ? 'text-blue-500' : 'text-primary'} font-bold mt-8 animate-pulse`}>Sending {isContactMode ? 'Message' : 'Request'}...</p>
+                 </div>
+               ) : isRequestSuccess ? (
                  <div className="flex flex-col items-center justify-center animate-[slideUp_0.3s_ease-out] h-full">
                     <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
                        <CheckCircle size={48} className="text-green-500" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-white font-bold text-xl mb-2">Request Sent!</h3>
+                    <h3 className="text-white font-bold text-xl mb-2">{isContactMode ? 'Message Sent!' : 'Request Sent!'}</h3>
                     <p className="text-slate-400 text-center text-sm px-4">
-                      We've received your request for <strong>{requestName}</strong>.
+                      {isContactMode 
+                        ? 'We will get back to your email shortly.' 
+                        : <>We've notified the team about <strong>{requestAppName}</strong>.</>}
                     </p>
                  </div>
                ) : (
-                 <div className="animate-[slideUp_0.3s_ease-out] h-full flex flex-col justify-between">
-                   <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="text-primary" size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-bold text-lg">Request a Mod</h3>
-                        <p className="text-slate-400 text-xs">Tell us what you want next!</p>
-                      </div>
+                 <div className="animate-[slideUp_0.3s_ease-out] flex flex-col gap-3">
+                   {/* Name Input */}
+                   <div>
+                     <input 
+                       type="text"
+                       value={requestName}
+                       onChange={(e) => setRequestName(e.target.value)}
+                       placeholder="Your Name"
+                       className="w-full bg-[#0f172a] rounded-xl border border-white/10 p-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-white/20 transition-colors text-sm"
+                     />
                    </div>
-
-                   <div className="space-y-4">
-                      {/* Name Input */}
-                      <div>
+                   
+                   {/* DYNAMIC FIELD: App Name vs Gmail */}
+                   <div>
+                     {isContactMode ? (
+                        <input 
+                          type="email"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="Your Gmail / Email"
+                          className="w-full bg-[#0f172a] rounded-xl border border-white/10 p-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                        />
+                     ) : (
                         <input 
                           type="text"
-                          value={requestName}
-                          onChange={(e) => setRequestName(e.target.value)}
-                          placeholder="Your Name"
+                          value={requestAppName}
+                          onChange={(e) => setRequestAppName(e.target.value)}
+                          placeholder="App Name (e.g. Minecraft)"
                           className="w-full bg-[#0f172a] rounded-xl border border-white/10 p-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors text-sm"
                         />
-                      </div>
-
-                      {/* Message Input */}
-                      <div className="relative">
-                        <textarea 
-                          value={requestText}
-                          onChange={(e) => setRequestText(e.target.value)}
-                          placeholder="e.g., Please add the latest mod for..."
-                          className="w-full h-24 bg-[#0f172a] rounded-xl border border-white/10 p-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors resize-none text-sm"
-                        />
-                      </div>
-                      
-                      <button 
-                        onClick={handleSendRequest}
-                        disabled={!requestText.trim() || !requestName.trim()}
-                        className="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Send Request <Send size={18} />
-                      </button>
+                     )}
                    </div>
+
+                   {/* Message Input */}
+                   <div className="relative">
+                     <textarea 
+                       value={requestText}
+                       onChange={(e) => setRequestText(e.target.value)}
+                       placeholder={isContactMode ? "Type your message to admin..." : "Additional details (version, features...)"}
+                       className={`w-full h-24 bg-[#0f172a] rounded-xl border border-white/10 p-4 text-white placeholder:text-slate-600 focus:outline-none transition-colors resize-none text-sm ${isContactMode ? 'focus:border-blue-500/50' : 'focus:border-primary/50'}`}
+                     />
+                   </div>
+                   
+                   <button 
+                     onClick={handleSendRequest}
+                     disabled={!requestText.trim() || !requestName.trim() || (isContactMode ? !contactEmail.trim() : !requestAppName.trim())}
+                     className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isContactMode 
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 shadow-blue-500/20 hover:shadow-blue-500/30' 
+                        : 'bg-gradient-to-r from-primary to-secondary shadow-primary/20 hover:shadow-primary/30'
+                     }`}
+                   >
+                     {isContactMode ? 'Send Message' : 'Send Request'} <Send size={18} />
+                   </button>
                  </div>
                )}
             </div>
+
+            {/* 5. VERIFIED REVIEWS (Moved to bottom as requested) */}
+            <section className="mb-6 animate-[slideUp_0.3s_ease-out]">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                 <ShieldCheck size={18} className="text-green-400" />
+                 <h2 className="text-lg font-bold text-white">Verified Reviews <span className="text-slate-500 text-xs ml-1">({publicFeedbacks.length})</span></h2>
+              </div>
+              
+              <div className="space-y-3">
+                 {publicFeedbacks.map((fb) => (
+                   <div key={fb.id} className="bg-surface/50 p-4 rounded-2xl border border-white/5 relative animate-[slideUp_0.2s_ease-out]">
+                      <div className="flex items-center gap-3 mb-2">
+                         <img src={fb.avatar} alt={fb.name} className="w-9 h-9 rounded-full bg-surface border border-white/10 object-cover" />
+                         <div className="flex-1">
+                            <h4 className="text-sm font-bold text-white leading-none mb-1">{fb.name}</h4>
+                            <div className="flex text-amber-400">
+                               {[...Array(5)].map((_, i) => (
+                                 <Star key={i} size={10} fill={i < fb.rating ? "currentColor" : "none"} className={i < fb.rating ? "" : "text-slate-600"} />
+                               ))}
+                            </div>
+                         </div>
+                         <span className="text-[10px] text-slate-500">{fb.time}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed pl-1">{fb.text}</p>
+                      <Quote size={16} className="absolute top-4 right-4 text-white/5" fill="currentColor" />
+                   </div>
+                 ))}
+              </div>
+            </section>
 
           </div>
         )}

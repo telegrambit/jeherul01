@@ -4,7 +4,7 @@ import { AppCard } from './components/AppCard';
 import { AppDetails } from './components/AppDetails';
 import { MOCK_APPS, CATEGORIES } from './constants';
 import { AppData, Tab } from './types';
-import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp, Star, Send, MessageSquare, Check, Edit3, Save, CheckCircle, Heart, Plane, User, Mail, ShieldCheck, Quote } from 'lucide-react';
+import { Search, Flame, Gamepad2, UserCircle, Hexagon, X, ChevronRight, ArrowLeft, Music, Film, Camera, Hammer, Sparkles, TrendingUp, Star, Send, MessageSquare, Check, Edit3, Save, CheckCircle, Heart, Plane, User, Mail, ShieldCheck, Quote, Clock, AlertTriangle } from 'lucide-react';
 
 // 9 High-Quality Modern Avatars (Micah Style)
 const AVATARS = [
@@ -19,11 +19,21 @@ const AVATARS = [
   'https://api.dicebear.com/9.x/micah/svg?seed=Willow'
 ];
 
-// Initial Mock Public Feedbacks
+// Mock Data with Timestamps for 24h Logic
+const NOW = Date.now();
+const ONE_HOUR = 3600000;
+
+// Populating with enough data to test "See All" functionality (More than 5 items)
 const INITIAL_FEEDBACKS = [
-  { id: 1, name: "Rahul Gaming", avatar: AVATARS[1], rating: 5, time: "2h ago", text: "Best mod store ever! The Minecraft mod works perfectly. 100% Trusted." },
-  { id: 2, name: "Sarah K.", avatar: AVATARS[4], rating: 5, time: "5h ago", text: "Super fast downloads and no viruses. Design is also very OP! ❤️" },
-  { id: 3, name: "Mike Tech", avatar: AVATARS[6], rating: 4, time: "1d ago", text: "Can you add more simulation games? Otherwise 10/10 app." }
+  { id: 1, name: "Rahul Gaming", avatar: AVATARS[1], rating: 5, time: "2h ago", text: "Best mod store ever! The Minecraft mod works perfectly. 100% Trusted.", timestamp: NOW - 2 * ONE_HOUR },
+  { id: 2, name: "Sarah K.", avatar: AVATARS[4], rating: 5, time: "5h ago", text: "Super fast downloads and no viruses. Design is also very OP! ❤️", timestamp: NOW - 5 * ONE_HOUR },
+  { id: 3, name: "Mike Tech", avatar: AVATARS[6], rating: 4, time: "8h ago", text: "Can you add more simulation games? Otherwise 10/10 app.", timestamp: NOW - 8 * ONE_HOUR },
+  { id: 4, name: "Alex Pro", avatar: AVATARS[2], rating: 5, time: "1h ago", text: "Finally found a working GTA mod. Thanks!", timestamp: NOW - 1 * ONE_HOUR },
+  { id: 5, name: "Gamer Girl", avatar: AVATARS[3], rating: 5, time: "30m ago", text: "Love the new interface!", timestamp: NOW - 0.5 * ONE_HOUR },
+  { id: 6, name: "Shadow", avatar: AVATARS[5], rating: 4, time: "18h ago", text: "Good speed but needs more updates.", timestamp: NOW - 18 * ONE_HOUR },
+  { id: 7, name: "Ninja007", avatar: AVATARS[7], rating: 5, time: "20h ago", text: "Safe and secure. Highly recommended.", timestamp: NOW - 20 * ONE_HOUR },
+  // This one is older than 24h and should be filtered out automatically
+  { id: 8, name: "Old User", avatar: AVATARS[8], rating: 3, time: "2d ago", text: "This should not appear.", timestamp: NOW - 48 * ONE_HOUR }, 
 ];
 
 const App: React.FC = () => {
@@ -45,6 +55,7 @@ const App: React.FC = () => {
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [publicFeedbacks, setPublicFeedbacks] = useState(INITIAL_FEEDBACKS);
+  const [showAllReviews, setShowAllReviews] = useState(false); // Modal for all reviews
   
   // Request / Contact Form States
   const [isContactMode, setIsContactMode] = useState(false); // Toggle state: false = Request Mod, true = Contact Owner
@@ -56,6 +67,10 @@ const App: React.FC = () => {
   const [isRequestSuccess, setIsRequestSuccess] = useState(false);
   const [isSending, setIsSending] = useState(false);
   
+  // 24H Limit Modal State
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitMessage, setLimitMessage] = useState("");
+
   // New State for viewing a specific category in full mode
   const [viewingCategory, setViewingCategory] = useState<string | null>(null);
   
@@ -75,6 +90,15 @@ const App: React.FC = () => {
     });
   }, [searchQuery, selectedCategory, activeTab]);
 
+  // Review Logic: Filter reviews older than 24 hours
+  const activeReviews = useMemo(() => {
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    return publicFeedbacks.filter(fb => fb.timestamp > twentyFourHoursAgo);
+  }, [publicFeedbacks]);
+
+  // Top 5 for main display
+  const displayedReviews = activeReviews.slice(0, 5);
+
   // Helper to get apps for a specific category
   const getCategoryApps = (category: string) => {
     let apps = category === 'All' 
@@ -92,6 +116,18 @@ const App: React.FC = () => {
       chunks.push(filledApps.slice(i, i + 3));
     }
     return chunks;
+  };
+
+  // Helper function to check 24h limit
+  const check24HourLimit = (key: string) => {
+    const lastTime = localStorage.getItem(key);
+    if (lastTime) {
+        const diff = Date.now() - parseInt(lastTime);
+        if (diff < 24 * 60 * 60 * 1000) {
+            return false;
+        }
+    }
+    return true;
   };
 
   const handleTabChange = (tab: Tab) => {
@@ -128,6 +164,14 @@ const App: React.FC = () => {
     if (!requestText.trim() || !requestName.trim()) return;
     if (isContactMode && !contactEmail.trim()) return;
     if (!isContactMode && !requestAppName.trim()) return;
+
+    // Check 24H Limit
+    const limitKey = 'lastRequestTime';
+    if (!check24HourLimit(limitKey)) {
+        setLimitMessage("You can only send a request/message once every 24 hours.");
+        setShowLimitModal(true);
+        return;
+    }
     
     // Start Sending Animation
     setIsSending(true);
@@ -136,6 +180,9 @@ const App: React.FC = () => {
     setTimeout(() => {
         setIsSending(false);
         setIsRequestSuccess(true);
+        
+        // Save timestamp
+        localStorage.setItem(limitKey, Date.now().toString());
         
         // Reset after showing success message for 3 seconds
         setTimeout(() => {
@@ -149,6 +196,14 @@ const App: React.FC = () => {
   };
 
   const handleSubmitFeedback = () => {
+    // Check 24H Limit
+    const limitKey = 'lastReviewTime';
+    if (!check24HourLimit(limitKey)) {
+        setLimitMessage("You can only submit a review once every 24 hours.");
+        setShowLimitModal(true);
+        return;
+    }
+
     // Create new review object
     const newReview = {
       id: Date.now(),
@@ -156,12 +211,16 @@ const App: React.FC = () => {
       avatar: currentAvatar, // Use current profile avatar
       rating: userRating,
       time: "Just now",
-      text: feedbackText || "Rated with " + userRating + " stars! ⭐"
+      text: feedbackText || "Rated with " + userRating + " stars! ⭐",
+      timestamp: Date.now()
     };
 
     // Add to top of list
     setPublicFeedbacks([newReview, ...publicFeedbacks]);
     setFeedbackSubmitted(true);
+    
+    // Save timestamp
+    localStorage.setItem(limitKey, Date.now().toString());
 
     setTimeout(() => {
       // Reset after 3 seconds so they can rate again if they want
@@ -302,7 +361,7 @@ const App: React.FC = () => {
                     <button 
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 border ${
+                    className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all duration-300 border ${
                       selectedCategory === cat 
                         ? 'bg-primary border-transparent text-white' 
                         : 'bg-surface border-white/5 text-slate-400 hover:bg-surface/80 hover:text-white hover:border-white/20'
@@ -629,7 +688,8 @@ const App: React.FC = () => {
                >
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                     <Plane className="text-blue-500 fill-blue-500/20 -rotate-45 translate-x-1" size={24} />
+                     {/* Updated Icon to Send (Paper Plane) */}
+                     <Send className="text-blue-500 fill-blue-500/20 translate-x-0.5 translate-y-0.5" size={24} />
                   </div>
                   <span className="text-white font-bold text-sm">Join Telegram</span>
                </button>
@@ -700,7 +760,7 @@ const App: React.FC = () => {
                             {isContactMode ? <Mail size={20} /> : <MessageSquare size={20} />}
                           </div>
                           <div>
-                            <h3 className="text-white font-bold text-lg">{isContactMode ? 'Contact Owner' : 'Request a Mod'}</h3>
+                            <h3 className="text-white font-bold text-lg">{isContactMode ? 'Contact Team' : 'Request a Mod'}</h3>
                             <p className="text-slate-400 text-xs">{isContactMode ? 'Send a direct message to admin' : 'Tell us what app you need next'}</p>
                           </div>
                        </div>
@@ -718,7 +778,7 @@ const App: React.FC = () => {
                          onClick={() => setIsContactMode(true)}
                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all z-10 ${isContactMode ? 'text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
                        >
-                         Contact Owner
+                         Contact Team
                        </button>
                        {/* Sliding Background */}
                        <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-surface rounded-lg transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${isContactMode ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}></div>
@@ -812,13 +872,23 @@ const App: React.FC = () => {
 
             {/* 5. VERIFIED REVIEWS (Moved to bottom as requested) */}
             <section className="mb-6 animate-[slideUp_0.3s_ease-out]">
-              <div className="flex items-center gap-2 mb-3 px-1">
-                 <ShieldCheck size={18} className="text-green-400" />
-                 <h2 className="text-lg font-bold text-white">Verified Reviews <span className="text-slate-500 text-xs ml-1">({publicFeedbacks.length})</span></h2>
+              <div className="flex items-center justify-between mb-3 px-1">
+                 <div className="flex items-center gap-2">
+                   <ShieldCheck size={18} className="text-green-400" />
+                   <h2 className="text-lg font-bold text-white">Verified Reviews</h2>
+                 </div>
+                 {activeReviews.length > 5 && (
+                   <button 
+                     onClick={() => setShowAllReviews(true)}
+                     className="flex items-center gap-1 text-xs text-primary font-bold bg-primary/10 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+                   >
+                     See All <ChevronRight size={14} />
+                   </button>
+                 )}
               </div>
               
               <div className="space-y-3">
-                 {publicFeedbacks.map((fb) => (
+                 {displayedReviews.map((fb) => (
                    <div key={fb.id} className="bg-surface/50 p-4 rounded-2xl border border-white/5 relative animate-[slideUp_0.2s_ease-out]">
                       <div className="flex items-center gap-3 mb-2">
                          <img src={fb.avatar} alt={fb.name} className="w-9 h-9 rounded-full bg-surface border border-white/10 object-cover" />
@@ -836,8 +906,71 @@ const App: React.FC = () => {
                       <Quote size={16} className="absolute top-4 right-4 text-white/5" fill="currentColor" />
                    </div>
                  ))}
+                 
+                 {displayedReviews.length === 0 && (
+                   <div className="text-center py-6 text-slate-500 text-sm">
+                     No reviews in the last 24 hours. Be the first!
+                   </div>
+                 )}
               </div>
             </section>
+
+            {/* ALL REVIEWS MODAL */}
+            {showAllReviews && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[slideUp_0.2s_ease-out]">
+                <div className="bg-[#0f172a] border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl relative flex flex-col h-[80vh]">
+                  
+                  {/* Modal Header */}
+                  <div className="flex justify-between items-center p-5 border-b border-white/5 bg-[#0f172a] rounded-t-3xl">
+                    <div className="flex items-center gap-2">
+                       <Clock size={18} className="text-primary" />
+                       <h3 className="text-lg font-bold text-white">Last 24 Hours</h3>
+                    </div>
+                    <button onClick={() => setShowAllReviews(false)} className="text-slate-400 hover:text-white p-1 bg-white/5 rounded-full"><X size={20} /></button>
+                  </div>
+
+                  {/* Scrollable List */}
+                  <div className="overflow-y-auto no-scrollbar flex-1 p-5 space-y-3">
+                     {activeReviews.map((fb) => (
+                       <div key={fb.id} className="bg-surface/50 p-4 rounded-2xl border border-white/5 relative">
+                          <div className="flex items-center gap-3 mb-2">
+                             <img src={fb.avatar} alt={fb.name} className="w-9 h-9 rounded-full bg-surface border border-white/10 object-cover" />
+                             <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white leading-none mb-1">{fb.name}</h4>
+                                <div className="flex text-amber-400">
+                                   {[...Array(5)].map((_, i) => (
+                                     <Star key={i} size={10} fill={i < fb.rating ? "currentColor" : "none"} className={i < fb.rating ? "" : "text-slate-600"} />
+                                   ))}
+                                </div>
+                             </div>
+                             <span className="text-[10px] text-slate-500">{fb.time}</span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed pl-1">{fb.text}</p>
+                       </div>
+                     ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* LIMIT WARNING MODAL */}
+            {showLimitModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[slideUp_0.2s_ease-out]">
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 w-full max-w-xs shadow-2xl text-center relative">
+                        <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertTriangle className="text-orange-500" size={24} />
+                        </div>
+                        <h3 className="text-white font-bold text-lg mb-2">Limit Reached</h3>
+                        <p className="text-slate-400 text-sm mb-6">{limitMessage}</p>
+                        <button 
+                            onClick={() => setShowLimitModal(false)}
+                            className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-colors"
+                        >
+                            Okay, I understand
+                        </button>
+                    </div>
+                </div>
+            )}
 
           </div>
         )}
